@@ -21,13 +21,19 @@ const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 // It was drawn in code for Friday 20 November 2026 (see README for the stories).
 const source = new URL('./entry.png', import.meta.url);
 const dest = join(outDir, 'entry.png');
+// The gate reads the file by its first bytes: refuse a source that is not a PNG.
+const expected = readFileSync(source);
+const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+if (!expected.subarray(0, 8).equals(PNG_MAGIC)) {
+  throw new Error('entry.png is not a PNG (bad magic bytes)');
+}
 copyFileSync(source, dest);
 
 // Verify the copy byte-for-byte: the judge must see exactly the entry bytes.
-const expected = readFileSync(source);
 const actual = readFileSync(dest);
 if (!expected.equals(actual)) {
   throw new Error(
     `entry.png copy mismatch: expected ${expected.length} bytes, wrote ${actual.length} bytes`,
   );
 }
+console.log(`entry.png written: ${actual.length} bytes (verified byte-for-byte)`);
